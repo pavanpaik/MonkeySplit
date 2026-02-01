@@ -3,7 +3,7 @@ name: "Auth Subagent"
 description: "Executes WS-0.1-C: Auth.js Email Magic Link"
 tools: ["Read", "Write", "Bash", "Grep"]
 context:
-  - "IMPLEMENTATION_PROMPT.md"
+  - ".agent/context/core.md"
   - ".agent/skills/authjs-magic-link/SKILL.md"
 ---
 

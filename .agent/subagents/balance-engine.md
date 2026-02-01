@@ -3,7 +3,7 @@ name: "Balance Engine Subagent"
 description: "Executes WS-0.1-D: Balance Calculation Engine"
 tools: ["Read", "Write", "Bash", "Grep"]
 context:
-  - "IMPLEMENTATION_PROMPT.md"
+  - ".agent/context/core.md"
   - ".agent/skills/balance-calculation/SKILL.md"
   - ".agent/skills/vitest-testing/SKILL.md"
 ---

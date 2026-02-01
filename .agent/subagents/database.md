@@ -3,7 +3,8 @@ name: "Database Subagent"
 description: "Executes WS-0.1-B: Database Schema & Drizzle Setup"
 tools: ["Read", "Write", "Bash", "Grep"]
 context:
-  - "IMPLEMENTATION_PROMPT.md"
+  - ".agent/context/core.md"
+  - ".agent/context/database.md"
   - ".agent/skills/drizzle-orm/SKILL.md"
 ---
 

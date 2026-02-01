@@ -3,7 +3,8 @@ name: "Groups Subagent"
 description: "Executes WS-0.1-E: Group CRUD & Members"
 tools: ["Read", "Write", "Bash", "Grep"]
 context:
-  - "IMPLEMENTATION_PROMPT.md"
+  - ".agent/context/core.md"
+  - ".agent/context/features.md"
   - ".agent/skills/nextjs-app-router/SKILL.md"
 ---
 

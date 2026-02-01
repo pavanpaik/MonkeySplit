@@ -3,7 +3,8 @@ name: "Expenses Subagent"
 description: "Executes WS-0.1-F: Basic Expense Form (Equal Split)"
 tools: ["Read", "Write", "Bash", "Grep"]
 context:
-  - "IMPLEMENTATION_PROMPT.md"
+  - ".agent/context/core.md"
+  - ".agent/context/features.md"
   - ".agent/skills/nextjs-app-router/SKILL.md"
 ---
 

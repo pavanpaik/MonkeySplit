@@ -3,7 +3,8 @@ name: "Integration Subagent"
 description: "Executes WS-0.1-G: Integration & Polish"
 tools: ["Read", "Write", "Bash", "Grep", "Browser"]
 context:
-  - "IMPLEMENTATION_PROMPT.md"
+  - ".agent/context/core.md"
+  - ".agent/context/features.md"
   - ".agent/skills/nextjs-app-router/SKILL.md"
   - ".agent/skills/vitest-testing/SKILL.md"
 ---

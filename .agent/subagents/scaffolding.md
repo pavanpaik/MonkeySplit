@@ -3,7 +3,7 @@ name: "Scaffolding Subagent"
 description: "Executes WS-0.1-A: Project Scaffolding"
 tools: ["Read", "Write", "Bash", "Grep"]
 context:
-  - "IMPLEMENTATION_PROMPT.md"
+  - ".agent/context/core.md"
 ---
 
 # WS-0.1-A: Project Scaffolding

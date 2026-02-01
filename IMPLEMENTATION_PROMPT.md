@@ -587,6 +587,18 @@ GOOGLE_CLOUD_VISION_KEY=...
 
 # Cron Secret
 CRON_SECRET=...
+
+# Rate Limiting (Upstash Redis)
+UPSTASH_REDIS_REST_URL=...
+UPSTASH_REDIS_REST_TOKEN=...
+
+# Error Monitoring (Sentry)
+SENTRY_DSN=...
+SENTRY_AUTH_TOKEN=...
+
+# Analytics (PostHog)
+NEXT_PUBLIC_POSTHOG_KEY=...
+NEXT_PUBLIC_POSTHOG_HOST=...
 ```
 
 ---
@@ -602,12 +614,16 @@ Seed the database with:
 
 ## Non-Functional Requirements
 
-- **Performance**: Server components by default; client components only for interactivity. Use React Suspense + streaming for data-heavy pages.
+- **Performance**: Server components by default; client components only for interactivity. Use React Suspense + streaming for data-heavy pages. See [Performance Benchmarks](#performance-benchmarks) for latency targets and caching strategy.
 - **Mobile-first**: Responsive design with bottom tab navigation on mobile, sidebar on desktop.
-- **Accessibility**: ARIA labels, keyboard navigation, focus management, color contrast AA compliant.
-- **Security**: CSRF protection (Auth.js built-in), input validation (Zod schemas), parameterized queries (Drizzle), rate limiting on API routes.
-- **Testing**: Vitest for unit tests (balance calculation, simplify debts), Playwright for E2E.
-- **Error handling**: Global error boundaries, toast notifications for action feedback, optimistic updates with rollback.
+- **Accessibility**: ARIA labels, keyboard navigation, focus management, color contrast AA compliant. See [Accessibility Audit](#accessibility-audit) for full compliance plan.
+- **Security**: CSRF protection (Auth.js built-in), input validation (Zod schemas), parameterized queries (Drizzle), rate limiting on API routes. See [Security Hardening](#security-hardening) and [Rate Limiting](#rate-limiting) for details.
+- **Testing**: Vitest for unit tests (balance calculation, simplify debts), Playwright for E2E. See [Testing Strategy](#testing-strategy) for coverage targets and test plans.
+- **Error handling**: Global error boundaries, toast notifications for action feedback, optimistic updates with rollback. See [Error Monitoring & Observability](#error-monitoring--observability) for production monitoring.
+- **Compliance**: GDPR data export/deletion, cookie consent, data retention policies. See [Compliance & Legal](#compliance--legal).
+- **CI/CD**: Automated lint, type-check, test, and build pipeline. See [CI/CD Pipeline](#cicd-pipeline).
+- **Observability**: Structured logging, error tracking, uptime monitoring. See [Error Monitoring & Observability](#error-monitoring--observability).
+- **Backup**: Automated database backups with point-in-time recovery. See [Backup & Disaster Recovery](#backup--disaster-recovery).
 
 ---
 
@@ -628,6 +644,363 @@ Output: `expense_participants` rows with correct `paid_share` and `owed_share`
 ### 4. Recurring Expense Cloner
 Input: Expense with repeat_interval
 Output: New expense with updated date, updated next_repeat_date on original
+
+---
+
+## Testing Strategy
+
+### Unit Tests (Vitest)
+- **Coverage target**: 80%+ for business logic, 60%+ overall
+- **Critical paths to test**:
+  - Balance calculation engine (equal splits, exact amounts, percentages, shares, adjustments)
+  - Debt simplification algorithm (2-person, 3-person, N-person, single currency, multi-currency)
+  - Multi-payer split resolution (edge cases: rounding, zero amounts, single participant)
+  - Recurring expense cloner (weekly, biweekly, monthly, yearly interval advancement)
+  - Currency rounding edge cases (e.g., $10 split 3 ways → $3.34, $3.33, $3.33)
+- **Test data factories**: Use a `createTestExpense()`, `createTestGroup()`, `createTestUser()` factory pattern with sensible defaults and overrides via partial params
+- **Mocking strategy**: Mock database calls with Drizzle's type-safe query builder; mock external services (Pusher, Resend, OCR) with Vitest `vi.mock()`
+
+### Integration Tests (Vitest + test database)
+- Spin up a test PostgreSQL database (use `pg-mem` or a Docker container via `testcontainers`)
+- Test full server action flows: create expense → verify balances → settle up → verify zero balances
+- Test auth flows with mocked Auth.js sessions
+- Test Drizzle migrations apply cleanly on a fresh database
+
+### E2E Tests (Playwright)
+- **Core flows**:
+  - Sign up → create group → add members → add expense → verify balances → settle up
+  - Send friend request → accept → add expense between friends
+  - Edit expense → verify system comment generated
+  - Delete expense → verify balance recalculation
+  - Recurring expense creation → verify cron cloning (mock time)
+- **Visual regression**: Capture screenshots of key pages for regression comparison
+- Run against a seeded test database with predictable data
+
+### Test Fixtures
+- Seed scripts for test environments with deterministic UUIDs
+- Fixture sets: "empty group," "group with 5 expenses," "group with simplified debts," "multi-currency group"
+
+---
+
+## CI/CD Pipeline
+
+### GitHub Actions Workflow
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+on: [push, pull_request]
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci
+      - run: npm run lint          # ESLint
+      - run: npm run type-check    # tsc --noEmit
+      - run: npm run test          # Vitest unit + integration
+      - run: npm run build         # Next.js production build
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: quality
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_DB: monkeysplit_test, POSTGRES_PASSWORD: test }
+        ports: ['5432:5432']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - run: npm run db:migrate
+        env: { DATABASE_URL: postgresql://postgres:test@localhost:5432/monkeysplit_test }
+      - run: npm run db:seed
+      - run: npx playwright test
+```
+
+### Deployment Strategy
+- **Preview deployments**: Vercel auto-deploys every PR to a unique preview URL — enable GitHub integration and require passing CI checks before merge
+- **Production deployments**: Merge to `main` triggers production deploy on Vercel
+- **Database migrations**: Run `drizzle-kit push` as a build step on Vercel (add to `vercel.json` build command) or use a separate migration job
+- **Environment variable management**: Use Vercel Environment Variables UI with three scopes: Development, Preview, Production. Never commit `.env` files. Use `.env.example` as a template.
+
+---
+
+## Error Monitoring & Observability
+
+### Error Tracking — Sentry
+- Install `@sentry/nextjs` and configure for both client and server
+- Capture unhandled exceptions, rejected promises, and server action errors
+- Tag errors with user ID, group ID, and action context
+- Set up Sentry alerts for error rate spikes (> 5 errors/min)
+
+### Structured Logging — Pino
+- Use `pino` for server-side structured JSON logging
+- Log levels: `error` for failures, `warn` for degraded paths, `info` for key actions (expense created, settlement recorded), `debug` for development
+- Include correlation IDs (request ID) across log entries
+- In production, ship logs to Vercel's built-in log drain or connect to Datadog/Logflare
+
+### Uptime Monitoring
+- Use Vercel's built-in cron monitoring to verify `recurring-expenses` cron runs successfully
+- Set up an external uptime monitor (e.g., BetterUptime or UptimeRobot) for the production URL
+- Health check endpoint: `GET /api/health` → returns `{ status: 'ok', db: 'connected', timestamp }` by querying the database with a simple `SELECT 1`
+
+### Performance Monitoring
+- Track Core Web Vitals via Vercel Analytics (built-in) or Sentry Performance
+- Monitor server action durations with custom Sentry spans
+- Set alert thresholds: LCP < 2.5s, FID < 100ms, CLS < 0.1
+
+---
+
+## Rate Limiting
+
+### Strategy
+Use **Upstash Redis** with the `@upstash/ratelimit` package for serverless-compatible rate limiting.
+
+### Rate Limits by Route
+
+| Route Pattern | Limit | Window | Notes |
+|--------------|-------|--------|-------|
+| `POST /api/auth/*` | 10 requests | 1 minute | Prevent brute force |
+| `POST /api/expenses` | 30 requests | 1 minute | Per authenticated user |
+| `POST /api/settlements` | 10 requests | 1 minute | Per authenticated user |
+| `POST /api/friends` | 20 requests | 1 minute | Prevent spam invites |
+| `POST /api/upload` | 5 requests | 1 minute | Limit file uploads |
+| `POST /api/ocr` | 3 requests | 1 minute | Expensive operation |
+| `GET /api/*` | 100 requests | 1 minute | General read endpoints |
+
+### Implementation
+- Apply rate limiting in Next.js middleware (`middleware.ts`) for API routes
+- Use sliding window algorithm via `@upstash/ratelimit`
+- Return `429 Too Many Requests` with `Retry-After` header
+- Environment variables: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
+
+---
+
+## Data Migration & Schema Evolution
+
+### Drizzle Migration Workflow
+- Generate migrations: `npx drizzle-kit generate:pg` after schema changes
+- Apply migrations: `npx drizzle-kit push:pg` (development) or `npx drizzle-kit migrate` (production with migration files)
+- Store migration files in `drizzle/migrations/` and commit to version control
+- Review generated SQL before applying to production
+
+### Rollback Procedures
+- Keep a `drizzle/rollbacks/` directory with manual rollback SQL for each migration
+- For additive changes (new columns, tables): rollback by dropping the addition
+- For destructive changes (column removal, type changes): use a two-phase approach:
+  1. Deploy code that handles both old and new schema
+  2. Run migration
+  3. Deploy code that only uses new schema
+- Test migrations against a staging database before production
+
+### Zero-Downtime Migrations
+- Prefer additive migrations (add nullable columns, new tables)
+- Never rename or drop columns directly — use add → migrate data → remove pattern
+- Use `DEFAULT` values for new non-nullable columns
+- Run migrations during low-traffic periods as a precaution
+
+---
+
+## Backup & Disaster Recovery
+
+### Database Backups
+- **Neon**: Automatic daily backups with 7-day retention on Pro plan; point-in-time recovery (PITR) to any second within the retention window
+- **Supabase**: Daily backups with 7-day retention (Pro); point-in-time recovery available on Pro plan
+- Document which provider is in use and the specific backup configuration
+
+### Recovery Strategy
+- **Point-in-time recovery**: Use provider's PITR to restore to a moment before data corruption
+- **Branch-based recovery** (Neon): Create a database branch from a past state, verify data, then promote or copy data back
+- **RTO target**: < 1 hour for full recovery
+- **RPO target**: < 1 minute (with PITR)
+
+### Data Export & Portability
+- Admin endpoint: `GET /api/admin/export` — exports all user data as JSON (for GDPR and portability)
+- User-facing: "Export my data" button in settings → generates a ZIP with expenses, groups, balances as CSV/JSON
+- Regular automated export to cloud storage (optional, for additional safety)
+
+---
+
+## Security Hardening
+
+### Input Sanitization
+- Use Zod schemas for all input validation on server actions and API routes
+- Sanitize user-generated content (descriptions, notes, comments, whiteboard) with `DOMPurify` or `sanitize-html` before rendering to prevent stored XSS
+- Escape HTML in all user-facing text rendered outside of React's auto-escaping (e.g., email templates)
+
+### Security Headers
+Configure in `next.config.js` or `vercel.json`:
+```
+Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:;
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+```
+
+### Dependency Vulnerability Scanning
+- Enable **Dependabot** on the GitHub repo for automatic dependency update PRs
+- Run `npm audit` in CI pipeline; fail the build on critical/high vulnerabilities
+- Consider **Snyk** for deeper scanning and license compliance
+
+### Session Management
+- Auth.js session strategy: JWT with 30-day expiry
+- Rotate session tokens on privilege escalation (e.g., changing email, enabling app lock)
+- Invalidate all sessions on password change
+- Implement CSRF tokens for all state-changing operations (Auth.js provides this by default)
+- Secure cookie settings: `httpOnly`, `secure`, `sameSite: 'lax'`
+
+---
+
+## Performance Benchmarks
+
+### Latency Targets
+
+| Operation | Target | Notes |
+|-----------|--------|-------|
+| Balance calculation (group of 20) | < 200ms | Server-side, cached |
+| Simplify debts (group of 20) | < 100ms | In-memory algorithm |
+| Expense list page load | < 500ms | With pagination (20 items) |
+| Dashboard load | < 800ms | Activity feed + balances |
+| Expense creation (server action) | < 300ms | Including balance recalculation |
+
+### Database Optimization
+- **Indexes**: Add indexes on `expenses(group_id, deleted_at)`, `expenses(friendship_id)`, `expense_participants(user_id)`, `activity_log(group_id, created_at)`, `notifications(user_id, read)`
+- **Query optimization**: Use `EXPLAIN ANALYZE` on critical queries during development; aim for index scans over sequential scans
+- **Connection pooling**: Use Neon's built-in connection pooler or PgBouncer; configure Drizzle with `max: 10` connections for serverless
+
+### Caching Strategy
+- **React `cache()`**: Wrap expensive balance calculations for request-level deduplication
+- **ISR (Incremental Static Regeneration)**: Use for semi-static pages like category lists, currency lists (revalidate every 24h)
+- **TanStack Query**: Client-side cache with `staleTime: 30s` for balance data, `staleTime: 5m` for user profile
+- **Redis cache** (Upstash): Cache exchange rates (TTL: 1 hour), group balances (TTL: 30s, invalidated on expense mutation)
+
+---
+
+## Accessibility Audit
+
+### WCAG AA Compliance
+- Run **axe-core** automated checks in CI (via `@axe-core/playwright` in E2E tests)
+- Run Lighthouse accessibility audit; target score > 90
+- Manual audit checklist for each major feature before release
+
+### Screen Reader Testing
+- Test with VoiceOver (macOS/iOS) and NVDA (Windows) on key flows:
+  - Creating an expense (form navigation, split method switching)
+  - Viewing balances (tabular data, debt summaries)
+  - Notification list (unread counts, marking as read)
+- Ensure all images have `alt` text; decorative icons use `aria-hidden="true"`
+- Use `aria-live="polite"` regions for real-time updates (new expenses, balance changes)
+
+### Keyboard Navigation
+- All interactive elements reachable via Tab
+- Expense form: Tab through fields in logical order, Enter to submit
+- Category picker: Arrow keys to navigate, Enter to select
+- Itemization drag-and-drop: Provide keyboard alternative (arrow keys to reorder, Space to assign)
+- Modal dialogs: Focus trap, Escape to close
+- Skip navigation link at top of page
+
+---
+
+## Compliance & Legal
+
+### GDPR Compliance
+- **Data export**: "Download my data" feature in user settings → exports all personal data as JSON/CSV ZIP
+- **Data deletion**: "Delete my account" flow:
+  1. Warn about unsettled balances
+  2. Anonymize expense participation (replace name/email with "Deleted User")
+  3. Delete user record, sessions, notifications
+  4. Retain anonymized financial records for other users' balance integrity
+- **Right to rectification**: Users can edit their profile data at any time
+
+### Legal Pages
+- `/terms` — Terms of Service page (static MDX)
+- `/privacy` — Privacy Policy page (static MDX)
+- Link to both in the footer and during registration
+
+### Cookie Consent
+- MonkeySplit uses only essential cookies (session, CSRF) — no tracking cookies in base deployment
+- If analytics are added (PostHog, etc.), implement a cookie consent banner using a lightweight library (e.g., `cookie-consent-banner`)
+- Store consent preference in a cookie; only load analytics scripts after consent
+
+### Data Retention
+- Active user data: retained indefinitely while account is active
+- Soft-deleted expenses: permanently purged after 90 days via a scheduled cron job
+- Deleted accounts: personal data removed within 30 days; anonymized financial records retained
+- Activity logs: retained for 1 year, then archived or purged
+
+---
+
+## Analytics
+
+### Product Analytics — PostHog
+- Self-hosted or cloud PostHog instance
+- Install `posthog-js` and initialize in the app layout (only after cookie consent if required)
+- Server-side event tracking via PostHog Node SDK for critical backend events
+
+### Key Metrics to Track
+
+| Metric | Event | Purpose |
+|--------|-------|---------|
+| DAU / MAU | `page_view` | User engagement |
+| Expenses created | `expense_created` | Core feature adoption |
+| Settlement rate | `settlement_recorded` / `expense_created` | Feature completion |
+| Group creation | `group_created` | Collaboration adoption |
+| Invite acceptance rate | `invite_accepted` / `invite_sent` | Growth funnel |
+| OCR usage | `ocr_scanned` | Premium feature adoption |
+| Retention (D1, D7, D30) | Session tracking | User stickiness |
+
+### Feature Flags
+- Use PostHog feature flags to gate Phase 3 features (OCR, Stripe Connect, charts)
+- Roll out new features gradually with percentage-based rollouts
+
+---
+
+## Edge Case Documentation
+
+### Placeholder Account Merging
+When a non-registered user is invited to a group or added as a friend:
+1. Create a placeholder user record with `email` only (no password, no OAuth)
+2. Associate expenses and group memberships with the placeholder
+3. When the user registers with that email:
+   - Match by email address
+   - Merge placeholder into the new real account (update `user_id` FK references)
+   - Transfer all group memberships, expense participations, and friend connections
+   - Delete the placeholder record
+4. Edge case: if user registers with a different email, allow manual claim via invite link token
+
+### Concurrent Expense Edits
+- Use **optimistic locking** via an `updated_at` timestamp
+- When saving an edit, check that `updated_at` matches the value when the form was loaded
+- If mismatch: reject the save with a "This expense was modified by another user" error and show the latest version
+- Real-time: push edit notifications via Pusher so other viewers see changes live
+
+### Currency Rounding Edge Cases
+- **Splitting $10.00 three ways**: $3.34 + $3.33 + $3.33 = $10.00
+  - Assign the extra cent to the first participant in alphabetical order (deterministic)
+- **General rule**: Calculate each share as `floor(amount * 100 / N) / 100`, then distribute the remainder cents one-by-one to participants
+- **Multi-decimal currencies** (e.g., KWD with 3 decimal places): Respect the `decimal_places` field from the `currencies` table
+- **Zero-amount shares**: Allow $0.00 shares for participants who are "involved" but not paying/owing (e.g., a child in a family group)
+
+### Group Deletion with Unsettled Balances
+- **Prevent hard deletion** if any non-zero balances exist between group members
+- **Soft delete**: Mark group as deleted, hide from UI, but preserve for balance resolution
+- Show a warning: "This group has unsettled balances. Members can still access it to settle up."
+- Once all balances are $0.00, allow permanent deletion (or auto-purge after 90 days)
+
+### Additional Edge Cases
+- **Self-expense**: Prevent adding an expense where the same user is the only payer and only participant
+- **Empty groups**: Allow groups with no expenses; show helpful onboarding prompts
+- **Large groups** (50+ members): Paginate member lists; optimize balance calculation with caching
+- **Timezone handling**: Store all timestamps in UTC; display in user's locale timezone
+- **Network failures**: Optimistic UI updates with rollback on server error; queue failed actions for retry
 
 ---
 

@@ -1,2 +1,2 @@
 # MonkeySplit
-Opensource SplitWize
+Opensource SplitWise

@@ -101,3 +101,15 @@ npm run test             # Run unit tests
 npm run test:coverage    # With coverage
 npm run test:e2e         # Playwright E2E
 ```
+
+## MCP Integration
+
+With Playwright MCP Server (Release 0.6.0), you can:
+
+```
+# Natural language E2E test generation
+"Write a test for the login flow"
+"Test creating an expense and viewing balances"
+"Generate accessibility tests for the expense form"
+```
+

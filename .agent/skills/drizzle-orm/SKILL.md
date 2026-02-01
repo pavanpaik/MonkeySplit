@@ -75,3 +75,17 @@ npx drizzle-kit generate:pg  # Generate migrations
 npx drizzle-kit push:pg      # Apply to database
 npx drizzle-kit studio       # Open Drizzle Studio
 ```
+
+## MCP Integration
+
+With Neon MCP Server configured (`.mcp/config.json`), you can:
+
+```
+# Natural language database operations
+"Create a new user table with email and name columns"
+"Show me all expenses in group xyz"
+"Add an index on expenses.group_id"
+```
+
+The Postgres MCP Server provides direct SQL access for complex queries.
+

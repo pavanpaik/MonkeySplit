@@ -59,7 +59,17 @@ Pattern libraries for specific technologies:
 - `design-system` — UI guidelines
 
 ### Workstreams (`.agent/subagents/`)
-Project-specific task definitions for Alpha 0.1.0 release.
+Project-specific task definitions for Alpha 0.1.0:
+
+| ID | Workstream | Description |
+|----|------------|-------------|
+| WS-0.1-A | Scaffolding | Next.js project setup, Tailwind, shadcn/ui |
+| WS-0.1-B | Database | Drizzle schema, Neon connection |
+| WS-0.1-C | Auth | Auth.js magic link, middleware |
+| WS-0.1-D | Balance Engine | Expense splitting algorithm, tests |
+| WS-0.1-E | Groups | Group CRUD, member management |
+| WS-0.1-F | Expenses | Expense form, equal split |
+| WS-0.1-G | Integration | Layout, navigation, E2E tests |
 
 ---
 
@@ -69,4 +79,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
 
 ## License
 
-MIT
+Apache License 2.0 — See [LICENSE](LICENSE) for details.

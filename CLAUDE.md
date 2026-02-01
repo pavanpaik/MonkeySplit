@@ -28,5 +28,5 @@ npm run type-check && npm run lint && npm run test && npm run build
 
 ## Current Phase
 **Alpha 0.1.0** — Groups, equal-split expenses, balances.
-See `IMPLEMENTATION_PROMPT.md` Section 2.
+See `.agent/subagents/` for workstream definitions.
 

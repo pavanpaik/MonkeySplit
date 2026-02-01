@@ -26,7 +26,4 @@ npm run type-check && npm run lint && npm run test && npm run build
 - **MCP Servers**: `.mcp/config.json` — External tool integrations
 - **Plugins**: See `PLUGINS.md` for recommended plugins by release
 
-## Current Phase
-**Alpha 0.1.0** — Groups, equal-split expenses, balances.
-See `.agent/subagents/` for workstream definitions.
 

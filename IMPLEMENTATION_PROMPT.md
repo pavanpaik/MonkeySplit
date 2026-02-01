@@ -514,7 +514,84 @@ app/
 
 ---
 
-## 7. Key UI Components
+## 7. Design System
+
+### Brand Identity
+**MonkeySplit** — Friendly, playful, trustworthy expense splitting.
+
+### Color Palette
+
+| Token | Light Mode | Dark Mode | Usage |
+|-------|-----------|-----------|-------|
+| `--primary` | `#22c55e` (Green) | `#22c55e` | Primary actions, branding |
+| `--positive` | `#22c55e` (Green) | `#4ade80` | You're owed money |
+| `--negative` | `#ef4444` (Red) | `#f87171` | You owe money |
+| `--background` | `#ffffff` | `#09090b` | Page background |
+| `--card` | `#ffffff` | `#18181b` | Card backgrounds |
+| `--muted` | `#f4f4f5` | `#27272a` | Muted backgrounds |
+| `--border` | `#e4e4e7` | `#27272a` | Borders, dividers |
+
+### Typography
+
+| Scale | Size | Weight | Usage |
+|-------|------|--------|-------|
+| `text-xs` | 12px | 400 | Labels, badges, timestamps |
+| `text-sm` | 14px | 400 | Body text, form inputs |
+| `text-base` | 16px | 400 | Primary content |
+| `text-lg` | 18px | 500 | Card titles |
+| `text-xl` | 20px | 600 | Section headers |
+| `text-2xl` | 24px | 700 | Page titles |
+| `text-4xl` | 36px | 700 | Hero amounts |
+
+**Font Stack**: `'Inter', system-ui, sans-serif`
+
+### Money Display Convention
+- Positive (owed to you): Green, with `+` prefix
+- Negative (you owe): Red, with `-` prefix
+- Settled: Gray, muted
+
+```tsx
+<span className="text-positive font-bold">+$125.50</span>
+<span className="text-negative font-bold">-$42.00</span>
+```
+
+### Spacing Scale
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `1` | 4px | Tight inline spacing |
+| `2` | 8px | Default gap between elements |
+| `4` | 16px | Section padding |
+| `6` | 24px | Card padding |
+| `8` | 32px | Page margins |
+
+### Responsive Breakpoints
+
+| Breakpoint | Width | Layout |
+|------------|-------|--------|
+| Mobile | < 768px | Bottom tab nav, stacked cards, full-width forms |
+| Tablet | 768-1024px | Collapsible sidebar, 2-column grid |
+| Desktop | > 1024px | Persistent sidebar, 3-column dashboard |
+
+### Animation
+
+- **Hover transitions**: 150ms ease
+- **Page transitions**: 200ms ease
+- **Loading states**: Skeleton shimmer animation
+- **Micro-interactions**: Subtle scale on button press (0.98)
+
+### Icons
+Use **Lucide React** consistently:
+- `Users` — Groups
+- `Receipt` — Expenses  
+- `Wallet` — Settlements
+- `Activity` — Activity feed
+- `Settings` — Settings
+- `Plus` — Add actions
+
+---
+
+## 8. Key UI Components
 
 ```
 components/
@@ -566,7 +643,7 @@ components/
 
 ---
 
-## 8. Server Actions & API Design
+## 9. Server Actions & API Design
 
 Use **Next.js Server Actions** for mutations and **Route Handlers** for the public-facing REST API.
 
@@ -606,7 +683,7 @@ getOverallBalances(): Promise<OverallBalances>
 
 ---
 
-## 9. Security
+## 10. Security
 
 ### Input Validation & Sanitization
 - Use **Zod schemas** for all input validation on server actions and API routes
@@ -655,7 +732,7 @@ Apply rate limiting in Next.js middleware (`middleware.ts`) using **Upstash Redi
 
 ---
 
-## 10. Performance
+## 11. Performance
 
 ### Latency Targets
 
@@ -685,7 +762,7 @@ Apply rate limiting in Next.js middleware (`middleware.ts`) using **Upstash Redi
 
 ---
 
-## 11. Testing
+## 12. Testing
 
 ### Unit Tests (Vitest)
 - **Coverage target**: 80%+ for business logic, 60%+ overall
@@ -725,7 +802,7 @@ Apply rate limiting in Next.js middleware (`middleware.ts`) using **Upstash Redi
 
 ---
 
-## 12. CI/CD Pipeline
+## 13. CI/CD Pipeline
 
 ### GitHub Actions Workflow
 
@@ -774,7 +851,7 @@ jobs:
 
 ---
 
-## 13. Observability
+## 14. Observability
 
 ### Error Tracking — Sentry
 - Install `@sentry/nextjs` and configure for both client and server
@@ -802,7 +879,7 @@ jobs:
 
 ---
 
-## 14. Accessibility
+## 15. Accessibility
 
 ### WCAG AA Compliance
 - Color contrast AA compliant across all components
@@ -827,7 +904,7 @@ jobs:
 
 ---
 
-## 15. Compliance & Legal
+## 16. Compliance & Legal
 
 ### GDPR
 - **Data export**: "Download my data" feature in user settings → exports all personal data as JSON/CSV ZIP via `GET /api/admin/export`
@@ -856,7 +933,7 @@ jobs:
 
 ---
 
-## 16. Analytics
+## 17. Analytics
 
 ### Product Analytics — PostHog
 - Self-hosted or cloud PostHog instance
@@ -881,7 +958,7 @@ jobs:
 
 ---
 
-## 17. Backup & Disaster Recovery
+## 18. Backup & Disaster Recovery
 
 ### Database Backups
 - **Neon**: Automatic daily backups with 7-day retention on Pro plan; point-in-time recovery (PITR) to any second within the retention window
@@ -901,7 +978,7 @@ jobs:
 
 ---
 
-## 18. Environment Variables
+## 19. Environment Variables
 
 ```env
 # Database
@@ -953,7 +1030,7 @@ NEXT_PUBLIC_POSTHOG_HOST=...
 
 ---
 
-## 19. Seed Data
+## 20. Seed Data
 
 Seed the database with:
 - **100+ currencies** (USD, EUR, GBP, JPY, INR, CAD, AUD, CHF, CNY, etc.)
@@ -962,7 +1039,7 @@ Seed the database with:
 
 ---
 
-## 20. Implementation Order
+## 21. Implementation Order
 
 ### Sprint 1: Foundation
 1. Initialize Next.js 14 project with TypeScript, Tailwind, shadcn/ui

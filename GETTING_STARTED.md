@@ -15,10 +15,10 @@ This guide helps you set up the development environment for MonkeySplit.
 
 ### Local Tools
 
+Verify you have these installed:
 ```bash
-# Verify versions
-node -v  # 18+ required
-npm -v   # 9+ recommended
+node -v   # Should be 18+
+npm -v    # Should be 9+
 git -v
 ```
 

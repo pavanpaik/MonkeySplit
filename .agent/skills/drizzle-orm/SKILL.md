@@ -1,9 +1,15 @@
 ---
-name: "Drizzle ORM"
-description: "Drizzle ORM patterns for PostgreSQL with Neon"
+name: "drizzle-orm"
+description: "Provides Drizzle ORM patterns for PostgreSQL with Neon including schema definitions, database operations, and migrations. Use this skill when creating database tables, writing queries, or managing schema changes."
 ---
 
 # Drizzle ORM Skill
+
+## When to Use
+- Defining database schema
+- Writing database queries
+- Running migrations
+- Setting up database client
 
 ## Setup
 ```typescript
@@ -71,7 +77,7 @@ await db.update(items).set({ deletedAt: new Date() }).where(eq(items.id, id));
 
 ## Commands
 
-> Note: The SQL dialect is configured in `drizzle.config.ts`, so commands no longer need a `:pg` qualifier.
+> Note: The SQL dialect is configured in `drizzle.config.ts`.
 
 ```bash
 npx drizzle-kit generate   # Generate migrations
@@ -79,16 +85,15 @@ npx drizzle-kit push       # Apply to database
 npx drizzle-kit studio     # Open Drizzle Studio
 ```
 
-## MCP Integration
+## Error Handling
 
-With Neon MCP Server configured (`.mcp/config.json`), you can:
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `connection refused` | Invalid DATABASE_URL | Check Neon connection string |
+| `relation does not exist` | Table not created | Run `npx drizzle-kit push` |
+| `duplicate key` | Unique constraint violation | Check for existing record first |
+| `column does not exist` | Schema out of sync | Re-run migrations |
 
-```
-# Natural language database operations
-"Create a new user table with email and name columns"
-"Show me all expenses in group xyz"
-"Add an index on expenses.group_id"
-```
-
-The Postgres MCP Server provides direct SQL access for complex queries.
-
+## References
+- Full schema: `IMPLEMENTATION_PROMPT.md` Section 2
+- MCP integration: `.mcp/config.json` for Neon server

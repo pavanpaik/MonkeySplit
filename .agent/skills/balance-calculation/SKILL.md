@@ -1,9 +1,15 @@
 ---
-name: "Balance Calculation"
-description: "Balance calculation algorithm for expense splitting"
+name: "balance-calculation"
+description: "Provides the balance calculation algorithm for expense splitting including types, computation logic, and test cases. Use this skill when implementing group balances, calculating who owes whom, or writing balance-related tests."
 ---
 
 # Balance Calculation Skill
+
+## When to Use
+- Implementing balance calculation for groups
+- Computing who owes whom
+- Writing tests for expense splitting
+- Understanding the debt simplification algorithm
 
 ## Types
 ```typescript
@@ -62,7 +68,7 @@ export async function calculateGroupBalances(groupId: string): Promise<BalanceRe
     else if (balance < 0) debtors.push({ userId, amount: -balance });
   }
 
-  // 5. Match debtors to creditors
+  // 5. Match debtors to creditors (greedy algorithm)
   creditors.sort((a, b) => b.amount - a.amount);
   debtors.sort((a, b) => b.amount - a.amount);
 
@@ -86,19 +92,42 @@ export async function calculateGroupBalances(groupId: string): Promise<BalanceRe
 
 ## Equal Split Calculation
 ```typescript
-function calculateEqualSplit(amount: number, participantCount: number): number[] {
-  const baseShare = Math.floor(amount * 100 / participantCount) / 100;
-  const remainder = Math.round((amount - baseShare * participantCount) * 100);
+function calculateEqualSplit(amountCents: number, participantIds: string[]): Map<string, number> {
+  const count = participantIds.length;
+  const baseCents = Math.floor(amountCents / count);
+  const remainder = amountCents - (baseCents * count);
   
-  return Array.from({ length: participantCount }, (_, i) => 
-    i < remainder ? baseShare + 0.01 : baseShare
-  );
+  // Sort IDs for deterministic remainder distribution
+  const sorted = [...participantIds].sort();
+  
+  const shares = new Map<string, number>();
+  sorted.forEach((id, i) => {
+    shares.set(id, baseCents + (i < remainder ? 1 : 0));
+  });
+  
+  return shares;
 }
-// $10 / 3 = [3.34, 3.33, 3.33]
+// $10.00 / 3 = {A: 334, B: 333, C: 333} cents
 ```
 
 ## Test Cases
-- Simple 2-person: A pays $10, both owe → A owed $5
-- 3-person equal: A pays $10, all owe → B owes A $3.33, C owes A $3.33
-- Zero amount: Handle gracefully
-- Single participant: No debts
+```typescript
+describe('calculateGroupBalances', () => {
+  it('simple 2-person: A pays $10, both owe → A owed $5', () => {});
+  it('3-person equal: A pays $10, all owe → B owes A $3.33, C owes A $3.33', () => {});
+  it('zero amount: returns empty debts', () => {});
+  it('single participant: no debts', () => {});
+});
+```
+
+## Error Handling
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| Float precision | Using `number` for money | Use integer cents, convert at display |
+| Non-deterministic split | Remainder varies by order | Sort participant IDs before distribution |
+| Negative balance shown | Sign confusion | Positive = owed TO you, negative = you OWE |
+
+## References
+- Algorithm details: `IMPLEMENTATION_PROMPT.md` Section 4
+- Edge cases: `IMPLEMENTATION_PROMPT.md` Section 5

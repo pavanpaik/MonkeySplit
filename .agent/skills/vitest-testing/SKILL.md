@@ -1,9 +1,15 @@
 ---
-name: "Vitest Testing"
-description: "Vitest unit testing and Playwright E2E patterns"
+name: "vitest-testing"
+description: "Provides Vitest unit testing and Playwright E2E testing patterns including setup, configuration, mocking, and test examples. Use this skill when writing unit tests, component tests, E2E tests, or setting up test infrastructure."
 ---
 
 # Vitest Testing Skill
+
+## When to Use
+- Writing unit tests for business logic
+- Testing React components
+- Creating E2E tests with Playwright
+- Mocking database calls
 
 ## Setup
 ```bash
@@ -35,14 +41,14 @@ import { calculateEqualSplit } from '../calculator';
 
 describe('calculateEqualSplit', () => {
   it('splits $10 equally among 3 people', () => {
-    const result = calculateEqualSplit(10, 3);
-    expect(result).toEqual([3.34, 3.33, 3.33]);
-    expect(result.reduce((a, b) => a + b, 0)).toBeCloseTo(10);
+    const result = calculateEqualSplit(1000, ['a', 'b', 'c']); // cents
+    expect([...result.values()]).toEqual([334, 333, 333]);
+    expect([...result.values()].reduce((a, b) => a + b, 0)).toBe(1000);
   });
 
   it('handles zero amount', () => {
-    const result = calculateEqualSplit(0, 3);
-    expect(result).toEqual([0, 0, 0]);
+    const result = calculateEqualSplit(0, ['a', 'b', 'c']);
+    expect([...result.values()]).toEqual([0, 0, 0]);
   });
 });
 ```
@@ -102,14 +108,15 @@ npm run test:coverage    # With coverage
 npm run test:e2e         # Playwright E2E
 ```
 
-## MCP Integration
+## Error Handling
 
-With Playwright MCP Server (Release 0.6.0), you can:
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `ReferenceError: document` | Wrong test environment | Set `environment: 'jsdom'` |
+| Mock not working | Import order | Mock before importing module |
+| Timeout in E2E | Slow page load | Increase timeout or use waitFor |
+| Act warning | State update after unmount | Wrap in `act()` or await properly |
 
-```
-# Natural language E2E test generation
-"Write a test for the login flow"
-"Test creating an expense and viewing balances"
-"Generate accessibility tests for the expense form"
-```
-
+## References
+- Testing guidelines: `IMPLEMENTATION_PROMPT.md` Section 12
+- Coverage requirements: 80% for business logic

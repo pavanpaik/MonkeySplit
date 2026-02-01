@@ -1,9 +1,15 @@
 ---
-name: "Auth.js Magic Link"
-description: "Auth.js v5 with email magic link authentication"
+name: "authjs-magic-link"
+description: "Provides Auth.js v5 configuration for email magic link authentication including route handlers, schema tables, and middleware. Use this skill when implementing authentication, protecting routes, or accessing user sessions."
 ---
 
 # Auth.js Magic Link Skill
+
+## When to Use
+- Setting up authentication
+- Protecting routes with middleware
+- Accessing user sessions
+- Creating login/logout flows
 
 ## Installation
 ```bash
@@ -14,20 +20,16 @@ npm install next-auth@beta @auth/drizzle-adapter resend
 ```typescript
 // lib/auth.ts
 import NextAuth from 'next-auth';
-import { DrizzleAdapter } from '@auth/drizzle-adapter';
 import Resend from 'next-auth/providers/resend';
-import { db } from '@/lib/db';
+import { DrizzleAdapter } from '@auth/drizzle-adapter';
+import { db } from './db';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db),
-  providers: [Resend({ from: 'noreply@monkeysplit.app' })],
-  pages: { signIn: '/login', verifyRequest: '/verify' },
-  callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: { ...session.user, id: user.id },
-    }),
-  },
+  providers: [
+    Resend({ from: 'noreply@yourdomain.com' }),
+  ],
+  pages: { signIn: '/login' },
 });
 ```
 
@@ -38,51 +40,68 @@ import { handlers } from '@/lib/auth';
 export const { GET, POST } = handlers;
 ```
 
-## Auth Schema Tables
-Required tables: `accounts`, `sessions`, `verification_tokens`
+## Required Schema Tables
+Auth.js requires: `users`, `accounts`, `sessions`, `verificationTokens`.
+See Drizzle adapter docs for exact schema.
 
 ## Middleware
 ```typescript
 // middleware.ts
 import { auth } from '@/lib/auth';
-import { NextResponse } from 'next/server';
 
 export default auth((req) => {
-  if (!req.auth && req.nextUrl.pathname.startsWith('/groups')) {
-    return NextResponse.redirect(new URL('/login', req.url));
+  if (!req.auth && req.nextUrl.pathname.startsWith('/app')) {
+    return Response.redirect(new URL('/login', req.url));
   }
 });
+
+export const config = { matcher: ['/app/:path*'] };
 ```
 
 ## Login Form
 ```typescript
-// app/(auth)/login/page.tsx
-import { signIn } from '@/lib/auth';
+'use client';
+import { signIn } from 'next-auth/react';
 
-export default function LoginPage() {
+export function LoginForm() {
   return (
     <form action={async (formData) => {
-      'use server';
-      await signIn('resend', formData);
+      await signIn('resend', { email: formData.get('email') });
     }}>
-      <input type="email" name="email" required />
-      <button type="submit">Sign in</button>
+      <input name="email" type="email" required />
+      <button type="submit">Send Magic Link</button>
     </form>
   );
 }
 ```
 
-## Getting Session
+## Get Session
 ```typescript
-// Server Component or Server Action
+// Server Component
+import { auth } from '@/lib/auth';
 const session = await auth();
-if (!session?.user) throw new Error('Unauthorized');
-const userId = session.user.id;
+
+// Client Component
+import { useSession } from 'next-auth/react';
+const { data: session } = useSession();
 ```
 
 ## Environment Variables
-```env
+```bash
 NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-secret-key
-RESEND_API_KEY=re_...
+NEXTAUTH_SECRET=xxx  # openssl rand -base64 32
+RESEND_API_KEY=re_xxx
 ```
+
+## Error Handling
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `NEXTAUTH_URL missing` | Env var not set | Add to `.env.local` |
+| `Email failed to send` | Invalid Resend key | Check RESEND_API_KEY |
+| `Adapter error` | Schema mismatch | Verify Auth.js tables exist |
+| `Callback URL mismatch` | Wrong NEXTAUTH_URL | Match production domain |
+
+## References
+- Auth flow: `IMPLEMENTATION_PROMPT.md` Section 3.1
+- Security: `IMPLEMENTATION_PROMPT.md` Section 10

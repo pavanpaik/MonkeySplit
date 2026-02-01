@@ -1,74 +1,58 @@
 ---
-name: "Workstream Protocol"
-description: "Workstream execution and handoff protocol"
+name: "workstream-protocol"
+description: "Defines the workstream execution and handoff protocol including status tracking, handoff report format, and verification steps. Use this skill when starting a workstream, creating handoff reports, or coordinating between workstreams."
 ---
 
 # Workstream Protocol Skill
 
-## Execution Flow
+## When to Use
+- Starting execution of a workstream
+- Creating handoff reports after completion
+- Coordinating dependencies between workstreams
+- Resolving conflicts or blockers
 
-1. **Read** workstream definition from subagent config
-2. **Load** referenced skills for patterns
-3. **Execute** each implementation step
-4. **Verify** using verification checklist
-5. **Generate** handoff report
+## Execution Flow
+1. Read subagent file for instructions
+2. Check dependencies are complete
+3. Read referenced skill files
+4. Implement deliverables
+5. Run verification commands
+6. Create handoff report
+7. Update workstream status
 
 ## Handoff Report Format
-
-Create `handoffs/WS-X.Y-Z.md` after completing a workstream:
-
 ```markdown
-# WS-0.1-B Handoff
+# WS-X.Y-Z Handoff
 
-## Status: COMPLETE ✅
+## Status: COMPLETE | BLOCKED | FAILED
+## Completed At: ISO timestamp
+## Duration: Xh Ym
 
-## Completed At
-2024-01-15T14:30:00Z
-
-## Files Created
-- `lib/db/index.ts` — Database client singleton
-- `lib/db/schema/users.ts` — Users table schema
-- `lib/db/schema/groups.ts` — Groups table schema
-
-## Files Modified
-- `package.json` — Added drizzle-orm dependencies
+## Files Created/Modified
+- `path/to/file.ts` — Description
 
 ## Decisions Made
-- Used UUID for all primary keys (deterministic, no conflicts)
-- Added soft-delete columns to all entities
-- Chose Neon serverless driver for edge compatibility
+- Decision and rationale
+
+## Known Issues
+- Issue description (if any)
 
 ## Verification Results
-- [x] `npx drizzle-kit studio` opens and shows tables
-- [x] Can insert and query test data
-- [x] All FK relationships valid
+- [x] Command 1 passed
+- [x] Command 2 passed
 
-## Known Issues / Tech Debt
-- No indexes defined yet (defer to 0.6.0)
-- Missing created_by on some tables
-
-## Notes for Dependent Workstreams
-- DB client: `import { db } from '@/lib/db'`
-- Schemas: `import { users, groups } from '@/lib/db/schema'`
-- Query pattern: `db.query.users.findMany()`
+## Next Workstream
+WS-X.Y-Z+1 can now proceed.
 ```
 
 ## Verification Commands
-
-Run after completing any workstream:
 ```bash
-npm run type-check    # TypeScript
-npm run lint          # ESLint
-npm run test          # Unit tests
-npm run build         # Production build
+# Run before marking complete
+npm run type-check
+npm run lint
+npm run test
+npm run build
 ```
-
-## Conflict Resolution
-
-1. **File Ownership**: Each workstream owns specific files
-2. **Shared Files**: `package.json`, `lib/db/schema/index.ts` — append only
-3. **Blocking**: If must modify shared code, document and coordinate
-4. **Integration**: WS-X.Y-G resolves all conflicts at merge
 
 ## Workstream States
 
@@ -79,3 +63,45 @@ npm run build         # Production build
 | `BLOCKED` | Waiting for clarification or dependency |
 | `COMPLETE` | All verification passed |
 | `FAILED` | Verification failed, needs retry |
+
+## Dependency Check
+Before starting a workstream, verify:
+```typescript
+// Check handoff exists
+const handoffs = fs.readdirSync('handoffs/');
+const required = ['WS-0.1-A.md']; // from subagent dependencies
+const ready = required.every(ws => handoffs.includes(ws));
+```
+
+## Conflict Resolution
+
+| Conflict | Resolution |
+|----------|------------|
+| File already exists | Check if from dependency, merge if needed |
+| Schema mismatch | Re-run migrations after schema update |
+| Test failure | Fix before marking complete |
+| Unclear requirement | Create BLOCKED handoff, request clarification |
+
+## Handoff Directory Structure
+```
+handoffs/
+├── WS-0.1-A.md    # Scaffolding
+├── WS-0.1-B.md    # Database
+├── WS-0.1-C.md    # Auth
+├── WS-0.1-D.md    # Balance Engine
+├── WS-0.1-E.md    # Groups
+├── WS-0.1-F.md    # Expenses
+└── WS-0.1-G.md    # Integration
+```
+
+## Error Handling
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| Dependency not met | Prior workstream incomplete | Check handoff status |
+| Verification failed | Code issues | Fix code, re-run verification |
+| Blocked state | Missing info | Document blocker, notify user |
+
+## References
+- Workstream definitions: `.agent/subagents/*.md`
+- Full spec: `IMPLEMENTATION_PROMPT.md`

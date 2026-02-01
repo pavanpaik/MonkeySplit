@@ -24,6 +24,94 @@
 
 ---
 
+## Release Roadmap
+
+This project follows a phased release approach to enable rapid validation and incremental delivery. Each release has clear scope boundaries and can be delegated to Claude subagents for parallel development.
+
+### Alpha 0.1.0 — Basic Proof of Concept
+**Goal**: Minimum viable expense sharing between users in a single group
+
+| Component | Scope | Out of Scope |
+|-----------|-------|--------------|
+| Auth | Email magic link only | OAuth providers |
+| Users | Basic profile (name, email, avatar) | Preferences, locale |
+| Groups | Create group, add members by email | Group types, cover images, invite links |
+| Expenses | Add expense with **Equal split only** | Other split methods, recurring, receipts |
+| Balances | Basic per-pair balance calculation | Simplify debts, multi-currency |
+| UI | Functional shadcn/ui components | Polish, animations, mobile optimization |
+
+**Success Criteria**: Two users can create a group, add an expense, and see who owes whom.
+
+---
+
+### Minor Release 0.2.0 — Full Split Methods & Settlements
+**Goal**: Complete expense creation experience with all split types
+
+| Component | Additions |
+|-----------|-----------|
+| Expenses | Exact amounts, Percentages, Shares, Adjustment splits |
+| Expenses | Multi-payer support (multiple people paid) |
+| Settlements | Record manual payments between users |
+| Balances | Simplify debts algorithm |
+| Categories | Seed category tree, category picker in form |
+| UI | Improved expense form with split method tabs |
+
+---
+
+### Minor Release 0.3.0 — Social & Communication
+**Goal**: Friends, activity tracking, and notifications
+
+| Component | Additions |
+|-----------|-----------|
+| Friends | Add by email, accept/reject requests, friend balances |
+| Activity | Activity feed with chronological events |
+| Notifications | In-app notification bell, unread counts |
+| Email | Transactional emails via Resend |
+| Comments | Comment threads on expenses |
+| Groups | Whiteboard (shared notepad) |
+
+---
+
+### Minor Release 0.4.0 — Multi-Currency & Real-time
+**Goal**: International support and live updates
+
+| Component | Additions |
+|-----------|-----------|
+| Currencies | 100+ currencies seeded, per-expense currency selection |
+| Exchange | Live rate fetching, balance conversion display |
+| Real-time | Pusher/Ably for live expense/balance updates |
+| Recurring | Weekly/biweekly/monthly/yearly recurring expenses |
+| Cron | Vercel Cron for recurring expense cloning |
+
+---
+
+### Minor Release 0.5.0 — Premium Features
+**Goal**: Advanced features for power users
+
+| Component | Additions |
+|-----------|-----------|
+| Receipt OCR | Upload photo → extract amount/line items |
+| Itemization | Assign line items to specific participants |
+| Reports | Spending by category, spending over time charts |
+| Export | CSV export of all expenses |
+| Search | Full-text expense search with filters |
+
+---
+
+### Minor Release 0.6.0 — Production Hardening
+**Goal**: Production-ready with operational excellence
+
+| Component | Additions |
+|-----------|-----------|
+| Auth | Google + GitHub OAuth providers |
+| Security | CSP headers, rate limiting, input sanitization |
+| Performance | Redis caching, query optimization, connection pooling |
+| Compliance | GDPR export/delete, cookie consent, privacy policy |
+| Accessibility | WCAG AA compliance, screen reader support |
+| Monitoring | Sentry error tracking, structured logging |
+
+---
+
 ## Database Schema
 
 ### Core Tables
@@ -510,44 +598,420 @@ getOverallBalances(): Promise<OverallBalances>
 
 ---
 
-## Implementation Order
+## Subagent Delegation Framework
 
-### Sprint 1: Foundation
-1. Initialize Next.js 14 project with TypeScript, Tailwind, shadcn/ui
-2. Set up Drizzle ORM + PostgreSQL schema + migrations
-3. Implement Auth.js (Google + GitHub + Email magic link)
-4. Seed currencies and categories tables
-5. User profile page + settings
+This section defines how work can be delegated to multiple Claude subagents for parallel development. Each **workstream** is a self-contained unit of work with clear dependencies, inputs, deliverables, and verification criteria.
 
-### Sprint 2: Core Expense Flow
-1. Friends system (add, accept, list, balances)
-2. Groups CRUD + member management
-3. Expense form (all split methods)
-4. Balance calculation engine
-5. Simplify debts algorithm
-6. Settle up flow
+### Workstream Principles
 
-### Sprint 3: Social & Communication
-1. Activity feed + activity logging
-2. Comment system on expenses
-3. Notification system (in-app + email via Resend)
-4. Real-time updates (Pusher/Ably)
+1. **Independence**: Each workstream can be executed without real-time coordination
+2. **Clear Boundaries**: No overlapping file ownership between concurrent workstreams
+3. **Verified Handoffs**: Each workstream has testable completion criteria
+4. **Sequential Dependencies**: Blocking dependencies are explicit in the graph
 
-### Sprint 4: Enhanced Features
-1. Recurring expenses + Vercel Cron
-2. Multi-currency support + conversion
-3. Receipt upload + OCR
-4. Itemization
-5. Expense search
+### Workstream Definition Template
 
-### Sprint 5: Reports & Polish
-1. Charts and reports (Recharts)
-2. CSV export
-3. Invite links + QR codes
-4. Group whiteboard
-5. Default splits
-6. Mobile-responsive polish
-7. PWA support (optional)
+```markdown
+## WS-X.Y: [Workstream Name]
+**Release**: X.Y.0 | **Parallel Group**: A/B/C | **Estimated Effort**: S/M/L
+
+### Dependencies
+- **Requires**: WS-X.Y (must be complete before starting)
+- **Blocks**: WS-X.Y (cannot start until this completes)
+
+### Inputs (Pre-conditions)
+- Files/schemas/components that must exist before starting
+
+### Deliverables
+- [ ] `path/to/file.ts` — Description of what this file does
+- [ ] `path/to/other.ts` — Description
+
+### Implementation Steps
+1. Step-by-step instructions
+2. Each step is actionable
+3. Reference specific files and functions
+
+### Verification Checklist
+- [ ] `npm run type-check` passes
+- [ ] `npm run test -- path/to/test` passes
+- [ ] Manual: Navigate to /page and verify X
+
+### Handoff Notes
+Context for the next workstream (edge cases, decisions made)
+```
+
+---
+
+## Alpha 0.1.0 Workstreams
+
+### Dependency Graph
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                        ALPHA 0.1.0 WORKSTREAM GRAPH                          │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌─────────────────┐                                                         │
+│  │   WS-0.1-A      │                                                         │
+│  │   Project       │                                                         │
+│  │   Scaffolding   │                                                         │
+│  └────────┬────────┘                                                         │
+│           │                                                                  │
+│           ▼                                                                  │
+│  ┌─────────────────┐                                                         │
+│  │   WS-0.1-B      │                                                         │
+│  │   Database      │                                                         │
+│  │   Schema        │                                                         │
+│  └────────┬────────┘                                                         │
+│           │                                                                  │
+│           ├──────────────────┬──────────────────┬──────────────────┐         │
+│           │                  │                  │                  │         │
+│           ▼                  ▼                  ▼                  ▼         │
+│  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌───────────┐   │
+│  │   WS-0.1-C      │ │   WS-0.1-D      │ │   WS-0.1-E      │ │ WS-0.1-F  │   │
+│  │   Auth.js       │ │   Balance       │ │   Group         │ │ Expense   │   │
+│  │   Magic Link    │ │   Engine        │ │   CRUD          │ │ Form      │   │
+│  └────────┬────────┘ └────────┬────────┘ └────────┬────────┘ └─────┬─────┘   │
+│           │                  │                  │                  │         │
+│           └──────────────────┴──────────────────┴──────────────────┘         │
+│                                       │                                      │
+│                                       ▼                                      │
+│                          ┌─────────────────────┐                             │
+│                          │      WS-0.1-G       │                             │
+│                          │    Integration      │                             │
+│                          │    & Polish         │                             │
+│                          └─────────────────────┘                             │
+│                                                                              │
+│  Legend: C, D, E, F can run in PARALLEL after B completes                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### WS-0.1-A: Project Scaffolding
+**Release**: 0.1.0 | **Parallel Group**: Sequential | **Estimated Effort**: S
+
+#### Dependencies
+- **Requires**: None (first workstream)
+- **Blocks**: WS-0.1-B
+
+#### Inputs
+- Empty project directory
+
+#### Deliverables
+- [ ] `package.json` — Next.js 14 with TypeScript, Tailwind, ESLint
+- [ ] `tailwind.config.ts` — Tailwind configuration
+- [ ] `tsconfig.json` — TypeScript strict mode enabled
+- [ ] `components/ui/*` — shadcn/ui base components installed
+- [ ] `app/layout.tsx` — Root layout with Tailwind globals
+- [ ] `app/page.tsx` — Landing page placeholder
+- [ ] `.env.example` — Template for environment variables
+
+#### Implementation Steps
+1. Run `npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir=false`
+2. Initialize shadcn/ui: `npx shadcn-ui@latest init`
+3. Add base components: `npx shadcn-ui@latest add button input card form`
+4. Create `.env.example` with DATABASE_URL placeholder
+5. Configure `next.config.js` for images and environment
+
+#### Verification Checklist
+- [ ] `npm run dev` starts without errors
+- [ ] `npm run build` completes successfully
+- [ ] `npm run lint` passes
+- [ ] Tailwind classes render correctly on homepage
+
+---
+
+### WS-0.1-B: Database Schema & Drizzle Setup
+**Release**: 0.1.0 | **Parallel Group**: Sequential | **Estimated Effort**: M
+
+#### Dependencies
+- **Requires**: WS-0.1-A
+- **Blocks**: WS-0.1-C, WS-0.1-D, WS-0.1-E, WS-0.1-F
+
+#### Inputs
+- Next.js project with package.json
+
+#### Deliverables
+- [ ] `drizzle.config.ts` — Drizzle configuration for PostgreSQL
+- [ ] `lib/db/index.ts` — Database connection singleton
+- [ ] `lib/db/schema/users.ts` — Users table (id, name, email, image, created_at)
+- [ ] `lib/db/schema/groups.ts` — Groups table (id, name, created_by, created_at)
+- [ ] `lib/db/schema/group-members.ts` — Group members junction table
+- [ ] `lib/db/schema/expenses.ts` — Expenses table (basic fields only)
+- [ ] `lib/db/schema/expense-participants.ts` — Expense participants
+- [ ] `drizzle/migrations/*` — Initial migration files
+
+#### Implementation Steps
+1. Install dependencies: `npm install drizzle-orm @neondatabase/serverless`
+2. Install dev deps: `npm install -D drizzle-kit`
+3. Create `drizzle.config.ts` pointing to DATABASE_URL
+4. Create schema files with Drizzle table definitions
+5. Export all schemas from `lib/db/schema/index.ts`
+6. Create db client in `lib/db/index.ts` using Neon serverless
+7. Run `npx drizzle-kit generate:pg` to create migrations
+8. Run `npx drizzle-kit push:pg` to apply to database
+
+#### Verification Checklist
+- [ ] `npx drizzle-kit studio` opens and shows tables
+- [ ] Can manually insert a user and query it back
+- [ ] All FK relationships are valid
+- [ ] Migrations folder contains SQL files
+
+---
+
+### WS-0.1-C: Auth.js Email Magic Link
+**Release**: 0.1.0 | **Parallel Group**: A | **Estimated Effort**: M
+
+#### Dependencies
+- **Requires**: WS-0.1-B
+- **Blocks**: WS-0.1-G
+
+#### Inputs
+- Database schema with users table
+- Drizzle client configured
+
+#### Deliverables
+- [ ] `lib/auth.ts` — Auth.js configuration with Drizzle adapter
+- [ ] `app/api/auth/[...nextauth]/route.ts` — Auth.js route handler
+- [ ] `app/(auth)/login/page.tsx` — Login page with email input
+- [ ] `app/(auth)/verify/page.tsx` — Magic link verification page
+- [ ] `components/auth/login-form.tsx` — Email submission form
+- [ ] `lib/db/schema/auth.ts` — Auth.js required tables (accounts, sessions, verification_tokens)
+
+#### Implementation Steps
+1. Install: `npm install next-auth@beta @auth/drizzle-adapter`
+2. Install Resend: `npm install resend`
+3. Create auth schema tables per Auth.js Drizzle adapter docs
+4. Run migration for new auth tables
+5. Configure Auth.js with Email provider (Resend)
+6. Create login page with email input form
+7. Create middleware.ts to protect routes
+8. Add session provider to root layout
+
+#### Verification Checklist
+- [ ] Entering email on login sends magic link
+- [ ] Clicking magic link creates session
+- [ ] Protected routes redirect to login
+- [ ] Session persists across page refreshes
+- [ ] `npm run test -- auth` passes
+
+---
+
+### WS-0.1-D: Balance Calculation Engine
+**Release**: 0.1.0 | **Parallel Group**: A | **Estimated Effort**: M
+
+#### Dependencies
+- **Requires**: WS-0.1-B
+- **Blocks**: WS-0.1-G
+
+#### Inputs
+- Database schema with expenses and expense_participants tables
+
+#### Deliverables
+- [ ] `lib/balance/calculator.ts` — Core balance calculation function
+- [ ] `lib/balance/types.ts` — TypeScript types for balances
+- [ ] `lib/balance/__tests__/calculator.test.ts` — Unit tests
+
+#### Implementation Steps
+1. Define types: `Balance`, `Debt`, `BalanceResult`
+2. Implement `calculateGroupBalances(groupId)`:
+   - Fetch all non-deleted expenses for group
+   - For each expense_participant: net = paid_share - owed_share
+   - Aggregate by user pair
+   - Return per-pair debts
+3. Write unit tests for:
+   - Simple 2-person expense
+   - 3+ person equal split
+   - Edge case: zero amount
+   - Edge case: single participant
+
+#### Verification Checklist
+- [ ] `npm run test -- balance` passes with 100% coverage
+- [ ] Function handles empty expense list gracefully
+- [ ] Function returns correct totals for sample data
+
+---
+
+### WS-0.1-E: Group CRUD & Members
+**Release**: 0.1.0 | **Parallel Group**: A | **Estimated Effort**: M
+
+#### Dependencies
+- **Requires**: WS-0.1-B
+- **Blocks**: WS-0.1-G
+
+#### Inputs
+- Database schema with groups and group_members tables
+- Auth.js configured (for getting current user)
+
+#### Deliverables
+- [ ] `app/(app)/groups/page.tsx` — List all user's groups
+- [ ] `app/(app)/groups/new/page.tsx` — Create group form
+- [ ] `app/(app)/groups/[groupId]/page.tsx` — Group dashboard
+- [ ] `app/actions/groups.ts` — Server actions: createGroup, addMember
+- [ ] `components/groups/group-card.tsx` — Group summary card
+- [ ] `components/groups/member-list.tsx` — Simple member list
+
+#### Implementation Steps
+1. Create server action `createGroup(name)` that inserts group + adds creator as admin
+2. Create server action `addMemberByEmail(groupId, email)` that adds or invites
+3. Build groups list page with cards
+4. Build create group form using shadcn Form
+5. Build group dashboard showing members and placeholder for expenses
+6. Add navigation links between pages
+
+#### Verification Checklist
+- [ ] Can create a new group
+- [ ] Creator is automatically a member
+- [ ] Can add another user by email
+- [ ] Groups list shows all user's groups
+
+---
+
+### WS-0.1-F: Basic Expense Form (Equal Split)
+**Release**: 0.1.0 | **Parallel Group**: A | **Estimated Effort**: M
+
+#### Dependencies
+- **Requires**: WS-0.1-B
+- **Blocks**: WS-0.1-G
+
+#### Inputs
+- Database schema with expenses and expense_participants
+- Group members available
+
+#### Deliverables
+- [ ] `app/(app)/groups/[groupId]/expenses/new/page.tsx` — Add expense form
+- [ ] `app/actions/expenses.ts` — Server action: createExpense
+- [ ] `components/expenses/expense-form.tsx` — Form with description, amount, participants
+- [ ] `components/expenses/participant-selector.tsx` — Checkbox list of group members
+- [ ] `components/expenses/expense-card.tsx` — Expense display in list
+
+#### Implementation Steps
+1. Create server action `createExpense(groupId, description, amount, payerId, participantIds)`
+2. Calculate equal split: owed_share = amount / participantCount
+3. Insert expense and expense_participants records
+4. Build expense form with:
+   - Description input
+   - Amount input (currency fixed to USD for Alpha)
+   - "Paid by" dropdown (current user default)
+   - Participant checkboxes (all members default selected)
+5. Build expense card showing description, amount, who paid
+6. Display expenses on group dashboard
+
+#### Verification Checklist
+- [ ] Can create an expense with description and amount
+- [ ] Equal split calculates correctly (3-way: $10 = $3.34, $3.33, $3.33)
+- [ ] Expense appears in group expense list
+- [ ] Payer and participants are recorded correctly
+
+---
+
+### WS-0.1-G: Integration & Polish
+**Release**: 0.1.0 | **Parallel Group**: Final | **Estimated Effort**: M
+
+#### Dependencies
+- **Requires**: WS-0.1-C, WS-0.1-D, WS-0.1-E, WS-0.1-F
+- **Blocks**: None (release gate)
+
+#### Inputs
+- All previous workstreams complete
+- Auth, Balance Engine, Groups, Expenses all functional
+
+#### Deliverables
+- [ ] `app/(app)/groups/[groupId]/balances/page.tsx` — Balance display page
+- [ ] `components/groups/balance-summary.tsx` — Who owes whom display
+- [ ] `app/(app)/layout.tsx` — App shell with sidebar navigation
+- [ ] `components/layout/sidebar.tsx` — Navigation sidebar
+- [ ] Integration test suite
+
+#### Implementation Steps
+1. Create balance display page that calls `calculateGroupBalances`
+2. Show debts in a clear "Alice owes Bob $10" format
+3. Build app layout with sidebar (Groups, Dashboard links)
+4. Add navigation between all pages
+5. Polish UI: consistent spacing, loading states
+6. Write E2E test: login → create group → add expense → view balance
+
+#### Verification Checklist
+- [ ] Full flow works: login → create group → add member → add expense → view balance
+- [ ] Balance calculation matches expected values
+- [ ] Navigation is intuitive
+- [ ] No console errors in browser
+- [ ] `npm run build` succeeds
+- [ ] E2E test passes
+
+---
+
+## Release 0.2.0 Workstreams
+
+### Dependency Graph
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         RELEASE 0.2.0 WORKSTREAM GRAPH                       │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Requires: Alpha 0.1.0 Complete                                              │
+│                                                                              │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐               │
+│  │   WS-0.2-A      │  │   WS-0.2-B      │  │   WS-0.2-C      │               │
+│  │   Split Methods │  │   Simplify      │  │   Categories    │               │
+│  │   (Exact, %)    │  │   Debts Algo    │  │   Seed + Picker │               │
+│  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘               │
+│           │                    │                    │                        │
+│           └────────────────────┼────────────────────┘                        │
+│                                │                                             │
+│                                ▼                                             │
+│                   ┌─────────────────────────┐                                │
+│                   │        WS-0.2-D         │                                │
+│                   │     Settlements &       │                                │
+│                   │     Multi-payer         │                                │
+│                   └─────────────────────────┘                                │
+│                                                                              │
+│  Legend: A, B, C can run in PARALLEL                                         │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+*(Detailed workstream definitions for 0.2.0+ follow the same template pattern)*
+
+---
+
+## Inter-Agent Communication Protocol
+
+### Handoff Format
+
+When a workstream completes, the executing agent should update a handoff file:
+
+```markdown
+# WS-0.1-B Handoff
+
+## Status: COMPLETE ✅
+
+## Files Created/Modified
+- lib/db/schema/users.ts (new)
+- lib/db/schema/groups.ts (new)
+- ...
+
+## Decisions Made
+- Used UUID for all primary keys (not serial)
+- Added soft-delete columns to all tables
+- Chose Neon serverless driver over node-postgres
+
+## Known Issues / Tech Debt
+- No indexes defined yet (add in 0.6.0)
+
+## Notes for Dependent Workstreams
+- DB client is exported from `lib/db/index.ts`
+- All schemas re-exported from `lib/db/schema/index.ts`
+- Use `db.insert(users).values({...})` pattern
+```
+
+### Conflict Resolution
+
+1. **File Ownership**: Each workstream owns specific files; no concurrent edits
+2. **Shared Files**: `package.json`, `lib/db/schema/index.ts` are append-only during parallel work
+3. **Merge Strategy**: Integration workstream (WS-X.Y-G) resolves any conflicts
+4. **Breaking Changes**: If a workstream must modify shared code, pause and coordinate
 
 ---
 

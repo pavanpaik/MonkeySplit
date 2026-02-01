@@ -31,7 +31,7 @@ export async function calculateGroupBalances(groupId: string): Promise<BalanceRe
     with: { participants: true },
   });
 
-  // 2. Calculate net balance per user
+  // 2. Calculate net balance per user (in cents to avoid float drift)
   const netBalances = new Map<string, number>();
   
   for (const expense of expenses) {
@@ -42,7 +42,17 @@ export async function calculateGroupBalances(groupId: string): Promise<BalanceRe
     }
   }
 
-  // 3. Convert to debts (creditors vs debtors)
+  // 3. Compute totals from net balances
+  let totalPaid = 0;
+  let totalOwed = 0;
+  for (const balance of netBalances.values()) {
+    if (balance > 0) totalPaid += balance;
+    else totalOwed += Math.abs(balance);
+  }
+  totalPaid = Math.round(totalPaid * 100) / 100;
+  totalOwed = Math.round(totalOwed * 100) / 100;
+
+  // 4. Convert to debts (creditors vs debtors)
   const debts: Debt[] = [];
   const creditors: Array<{ userId: string; amount: number }> = [];
   const debtors: Array<{ userId: string; amount: number }> = [];
@@ -52,7 +62,7 @@ export async function calculateGroupBalances(groupId: string): Promise<BalanceRe
     else if (balance < 0) debtors.push({ userId, amount: -balance });
   }
 
-  // 4. Match debtors to creditors
+  // 5. Match debtors to creditors
   creditors.sort((a, b) => b.amount - a.amount);
   debtors.sort((a, b) => b.amount - a.amount);
 
@@ -70,7 +80,7 @@ export async function calculateGroupBalances(groupId: string): Promise<BalanceRe
     if (creditors[j].amount < 0.01) j++;
   }
 
-  return { debts, totalOwed: 0, totalPaid: 0 };
+  return { debts, totalOwed, totalPaid };
 }
 ```
 

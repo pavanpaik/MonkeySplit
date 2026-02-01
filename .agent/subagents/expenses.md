@@ -20,8 +20,8 @@ Implement expense creation with equal split functionality.
 
 1. Create server action `app/actions/expenses.ts`:
    - `createExpense(groupId, description, amount, payerId, participantIds)`
-   - Calculate equal split: `owed_share = amount / participantCount`
-   - Handle remainder cents deterministically
+   - Calculate equal split in integer cents: `owedCents = Math.floor(amountCents / participantCount)`
+   - Distribute remainder deterministically: sort `participantIds` alphabetically, assign extra cents to first N participants
 2. Create page: `app/(app)/groups/[groupId]/expenses/new/page.tsx`
 3. Create components:
    - `components/expenses/expense-form.tsx`

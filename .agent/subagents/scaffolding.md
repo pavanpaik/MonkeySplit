@@ -17,7 +17,7 @@ Initialize Next.js 14 project with TypeScript, Tailwind, and shadcn/ui.
 
 ## Instructions
 
-1. Run `npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir=false`
+1. Run `npx create-next-app@latest . --typescript --tailwind --eslint --app --no-src-dir`
 2. Initialize shadcn/ui: `npx shadcn-ui@latest init`
 3. Add base components: `npx shadcn-ui@latest add button input card form`
 4. Create `.env.example` with DATABASE_URL placeholder

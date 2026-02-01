@@ -70,10 +70,13 @@ await db.update(items).set({ deletedAt: new Date() }).where(eq(items.id, id));
 ```
 
 ## Commands
+
+> Note: The SQL dialect is configured in `drizzle.config.ts`, so commands no longer need a `:pg` qualifier.
+
 ```bash
-npx drizzle-kit generate:pg  # Generate migrations
-npx drizzle-kit push:pg      # Apply to database
-npx drizzle-kit studio       # Open Drizzle Studio
+npx drizzle-kit generate   # Generate migrations
+npx drizzle-kit push       # Apply to database
+npx drizzle-kit studio     # Open Drizzle Studio
 ```
 
 ## MCP Integration

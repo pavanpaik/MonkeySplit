@@ -42,4 +42,4 @@ Integrate all workstreams and polish the Alpha 0.1.0 release.
 - [ ] Navigation is intuitive
 - [ ] No console errors
 - [ ] `npm run build` succeeds
-- [ ] E2E test passes
+- [ ] `npm run test:e2e` passes

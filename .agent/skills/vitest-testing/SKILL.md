@@ -7,7 +7,7 @@ description: "Vitest unit testing and Playwright E2E patterns"
 
 ## Setup
 ```bash
-npm install -D vitest @testing-library/react @testing-library/jest-dom
+npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event
 npm install -D @playwright/test
 ```
 

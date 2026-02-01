@@ -23,11 +23,11 @@ Implement core balance calculation algorithm for group expenses.
    - `Balance`, `Debt`, `BalanceResult` types
 2. Create `lib/balance/calculator.ts`:
    - `calculateGroupBalances(groupId)` function
-3. Algorithm:
+3. Algorithm (use integer cents to avoid float drift):
    - Fetch non-deleted expenses for group
-   - For each participant: net = paid_share - owed_share
+   - For each participant: `netCents = paidShareCents - owedShareCents`
    - Aggregate by user pair
-   - Return per-pair debts
+   - Round final amounts to 2 decimal places
 4. Create `lib/balance/__tests__/calculator.test.ts`
 
 ## Deliverables
